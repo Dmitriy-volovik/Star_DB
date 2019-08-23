@@ -1,22 +1,24 @@
-import React, { Component } from "react";
-import SwapiService from "../../services/swapi-service";
+import React from "react";
 
-export default class ItemList extends Component {
-  render() {
-    // const listData = SwapiService.getAllPeople().then(people => {
-    //   people.forEach(p => {
-    //     console.log(p.name);
-    //   });
-    // });
+const ItemList = props => {
+  const { data, onItemSelected, children: renderLabel } = props;
+
+  const items = data.map(item => {
+    const { id } = item;
+    const label = renderLabel(item);
 
     return (
-      <div>
-        <ul className="item-list list-group">
-          <li className="list-group-item">Luke Skywalker</li>
-          <li className="list-group-item">Darth Vader</li>
-          <li className="list-group-item">R2-D2</li>
-        </ul>
-      </div>
+      <li
+        className="list-group-item"
+        key={id}
+        onClick={() => onItemSelected(id)}
+      >
+        {label}
+      </li>
     );
-  }
-}
+  });
+
+  return <ul className="item-list list-group">{items}</ul>;
+};
+
+export default ItemList;
