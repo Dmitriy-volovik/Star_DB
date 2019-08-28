@@ -1,4 +1,3 @@
-import RandomPlanet from "./random-planet";
-import "./random-planet.css";
+import RandomPlanet from './random-planet';
 
 export default RandomPlanet;

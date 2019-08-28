@@ -1,68 +1,89 @@
 import React, { Component } from "react";
+
 import Header from "../header";
 import RandomPlanet from "../random-planet";
-import ErrorIndicator from "../error-indicator";
-import ErrorButton from "../error-button";
+import ErrorBoundry from "../error-boundry";
 import SwapiService from "../../services/swapi-service";
-import Row from "../row";
-import ItemDetails, { Record } from "../item-details/item-details";
-import F from "../item-list";
-import ItemList from "../item-list";
+import DummySwapiService from "../../services/dummy-swapi-service";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import {
+  PeoplePage,
+  PlanetsPage,
+  StarshipsPage,
+  LoginPage,
+  SecretPage
+} from "../pages";
+
+import { SwapiServiceProvider } from "../swapi-service-context";
+
+import "./app.css";
+import { StarshipDetails } from "../sw-components";
 
 export default class App extends Component {
-  swapiService = new SwapiService();
-  state = { hasError: false, showRandomPlanet: true };
+  state = {
+    swapiService: new SwapiService(),
+    isLoggedIn: false
+  };
 
-  toggleRandomPlanet = () => {};
-
-  componentDidCatch() {
+  onLogin = () => {
     this.setState({
-      hasError: true
+      isLoggedIn: true
     });
-    console.log("didCatch");
-  }
+  };
+
+  onServiceChange = () => {
+    this.setState(({ swapiService }) => {
+      const Service =
+        swapiService instanceof SwapiService ? DummySwapiService : SwapiService;
+
+      return { swapiService: new Service() };
+    });
+  };
 
   render() {
-    if (this.state.hasError) {
-      return <ErrorIndicator />;
-    }
-
-    const {
-      getPerson,
-      getStarship,
-      getPersonImage,
-      getStarshipImage,
-      getAllPeople
-    } = this.swapiService;
-    const personDetails = (
-      <ItemDetails itemId={11} getData={getPerson} getImageUrl={getPersonImage}>
-        <Record field="gender" label="Gender " />
-        <Record field="eyeColor" label="Eye Color " />
-      </ItemDetails>
-    );
-
-    const starshipDetails = (
-      <ItemDetails
-        itemId={5}
-        getData={getStarship}
-        getImageUrl={getStarshipImage}
-      >
-        <Record field="model" label="Model " />
-        <Record field="length" label="Length " />
-        <Record field="costInCredits" label="Cost  " />
-      </ItemDetails>
-    );
+    const { isLoggedIn } = this.state;
 
     return (
-      <div className="stardb-app">
-        <Header />
-        {/* <RandomPlanet /> */}
-        <ErrorButton />
-        <ItemList getData={getAllPeople}>
-          {name => <span>{name}</span>}
-        </ItemList>
-        <Row left={personDetails} right={starshipDetails} />
-      </div>
+      <ErrorBoundry>
+        <SwapiServiceProvider value={this.state.swapiService}>
+          <Router>
+            <div className="stardb-app">
+              <Header onServiceChange={this.onServiceChange} />
+              <RandomPlanet />
+              <Switch>
+                <Route
+                  exact
+                  path="/"
+                  render={() => <h2>WElcome to this App</h2>}
+                />
+                <Route path="/people/:id?" component={PeoplePage} />
+                <Route path="/planets" component={PlanetsPage} />
+                {/* <Route path="/planets" component={PlanetsPage} /> */}
+                <Route exact path="/starships" component={StarshipsPage} />
+                <Route
+                  path="/starships/:id"
+                  render={({ match, location, history }) => {
+                    console.log("match- ", match);
+                    const { id } = match.params;
+                    return <StarshipDetails itemId={id} />;
+                  }}
+                />
+                <Route
+                  path="/login"
+                  render={() => (
+                    <LoginPage isLoggedIn={isLoggedIn} onLogin={this.onLogin} />
+                  )}
+                />
+                <Route
+                  path="/secret"
+                  render={() => <SecretPage isLoggedIn={isLoggedIn} />}
+                />
+                <Route render={() => <h2>Page not found</h2>} />
+              </Switch>
+            </div>
+          </Router>
+        </SwapiServiceProvider>
+      </ErrorBoundry>
     );
   }
 }
